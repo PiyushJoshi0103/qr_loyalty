@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function isOwner() {
+      return request.auth != null
+          && request.auth.token.email == 'piyush3joshi@gmail.com';
+    }
+
+    function tokenOk() {
+      let q = get(/databases/$(db)/documents/config/qr).data;
+      return request.resource.data.token in [q.cur, q.prev];
+    }
+
+    match /config/{doc} {
+      allow read: if request.auth != null;
+      allow write: if isOwner();
+    }
+
+    match /redemptions/{id} {
+      allow read, write: if isOwner();
+    }
+
+    match /customers/{phone} {
+      allow get: if request.auth != null;
+      allow list: if isOwner();
+
+      allow create: if request.auth != null && tokenOk()
+        && phone.matches('[0-9]{10}')
+        && request.resource.data.phone == phone
+        && request.resource.data.points == 1
+        && request.resource.data.lastScan == request.time;
+
+      allow update: if isOwner() || (
+        request.auth != null && tokenOk()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['points', 'lastScan', 'token'])
+        && request.resource.data.points == resource.data.points + 1
+        && resource.data.points < 7
+        && request.resource.data.lastScan == request.time
+        && request.time > resource.data.lastScan + duration.value(1, 'm')
+      );
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Scan & Play",
+  "short_name": "Scan&Play",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#673ab7",
+  "description": "QR loyalty app",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false,
+  "icons": []
+}
